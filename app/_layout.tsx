@@ -1,39 +1,33 @@
-import { Ionicons } from '@expo/vector-icons';
-import { Tabs } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import { Stack } from 'expo-router';
 
-export default function TabsLayout() {
+export default function RootLayout() {
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: '#2563EB',
-        tabBarInactiveTintColor: '#6B7280',
-        tabBarStyle: {
-          height: 64,
-          paddingBottom: 8,
-          paddingTop: 8,
-        },
-      }}
-    >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home-outline" size={size} color={color} />
-          ),
+    <>
+      <StatusBar style="dark" />
+      <Stack
+        screenOptions={{
+          headerStyle: {
+            backgroundColor: '#FFFFFF',
+          },
+          headerBackButtonDisplayMode: 'minimal',
+          headerTintColor: '#111827',
+          headerTitleStyle: {
+            fontWeight: '700',
+          },
+          headerShadowVisible: false,
+          contentStyle: {
+            backgroundColor: '#F7F8FA',
+          },
         }}
-      />
-
-      <Tabs.Screen
-        name="explore"
-        options={{
-          title: 'About',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="information-circle-outline" size={size} color={color} />
-          ),
-        }}
-      />
-    </Tabs>
+      >
+        <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="converter" options={{ title: 'Unit Converter' }} />
+        <Stack.Screen name="notes" options={{ title: 'Notes' }} />
+        <Stack.Screen name="calculator" options={{ title: 'Calculator' }} />
+        <Stack.Screen name="tasks" options={{ title: 'Task Manager' }} />
+        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+      </Stack>
+    </>
   );
 }
