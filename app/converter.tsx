@@ -1,12 +1,14 @@
 import { useMemo, useState } from 'react';
 import {
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
+
+import { AppButton } from '@/components/app-button';
 
 const conversionData = {
   Length: {
@@ -38,8 +40,9 @@ const conversionData = {
 };
 
 const temperatureUnits = ['Celsius', 'Fahrenheit', 'Kelvin'];
+const categories = ['Length', 'Weight', 'Temperature', 'Currency'] as const;
 
-type Category = 'Length' | 'Weight' | 'Temperature' | 'Currency';
+type Category = (typeof categories)[number];
 
 export default function ConverterScreen() {
   const [category, setCategory] = useState<Category>('Length');
@@ -48,14 +51,19 @@ export default function ConverterScreen() {
   const [toUnit, setToUnit] = useState('Kilometer');
 
   const units = useMemo(() => {
-    if (category === 'Temperature') return temperatureUnits;
+    if (category === 'Temperature') {
+      return temperatureUnits;
+    }
+
     return conversionData[category].units;
   }, [category]);
 
   const result = useMemo(() => {
-    const value = parseFloat(inputValue);
+    const value = Number.parseFloat(inputValue);
 
-    if (isNaN(value)) return '';
+    if (Number.isNaN(value)) {
+      return '';
+    }
 
     if (category === 'Temperature') {
       return convertTemperature(value, fromUnit, toUnit).toFixed(2);
@@ -64,42 +72,63 @@ export default function ConverterScreen() {
     const baseValue =
       value *
       conversionData[category].toBase[
-        fromUnit as keyof typeof conversionData[typeof category]['toBase']
+        fromUnit as keyof typeof conversionData[Exclude<Category, 'Temperature'>]['toBase']
       ];
 
     const convertedValue =
       baseValue /
       conversionData[category].toBase[
-        toUnit as keyof typeof conversionData[typeof category]['toBase']
+        toUnit as keyof typeof conversionData[Exclude<Category, 'Temperature'>]['toBase']
       ];
 
     return convertedValue.toFixed(2);
-  }, [inputValue, fromUnit, toUnit, category]);
+  }, [category, fromUnit, inputValue, toUnit]);
 
   const handleCategoryChange = (selectedCategory: Category) => {
     setCategory(selectedCategory);
+    setInputValue('');
 
     if (selectedCategory === 'Length') {
       setFromUnit('Meter');
       setToUnit('Kilometer');
-    } else if (selectedCategory === 'Weight') {
-      setFromUnit('Kilogram');
-      setToUnit('Gram');
-    } else if (selectedCategory === 'Temperature') {
-      setFromUnit('Celsius');
-      setToUnit('Fahrenheit');
-    } else {
-      setFromUnit('USD');
-      setToUnit('NGN');
+      return;
     }
 
-    setInputValue('');
+    if (selectedCategory === 'Weight') {
+      setFromUnit('Kilogram');
+      setToUnit('Gram');
+      return;
+    }
+
+    if (selectedCategory === 'Temperature') {
+      setFromUnit('Celsius');
+      setToUnit('Fahrenheit');
+      return;
+    }
+
+    setFromUnit('USD');
+    setToUnit('NGN');
   };
 
   const handleSwapUnits = () => {
-    const oldFrom = fromUnit;
     setFromUnit(toUnit);
-    setToUnit(oldFrom);
+    setToUnit(fromUnit);
+  };
+
+  const handleFromUnitChange = (selectedUnit: string) => {
+    if (selectedUnit === toUnit) {
+      return;
+    }
+
+    setFromUnit(selectedUnit);
+  };
+
+  const handleToUnitChange = (selectedUnit: string) => {
+    if (selectedUnit === fromUnit) {
+      return;
+    }
+
+    setToUnit(selectedUnit);
   };
 
   return (
@@ -109,15 +138,13 @@ export default function ConverterScreen() {
 
       <Text style={styles.label}>Category</Text>
       <View style={styles.rowWrap}>
-        {(['Length', 'Weight', 'Temperature', 'Currency'] as Category[]).map((item) => (
+        {categories.map((item) => (
           <TouchableOpacity
             key={item}
             style={[styles.optionButton, category === item && styles.activeButton]}
             onPress={() => handleCategoryChange(item)}
           >
-            <Text style={[styles.optionText, category === item && styles.activeText]}>
-              {item}
-            </Text>
+            <Text style={[styles.optionText, category === item && styles.activeText]}>{item}</Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -127,8 +154,8 @@ export default function ConverterScreen() {
         style={styles.input}
         placeholder="Enter a value"
         keyboardType="numeric"
-        value={inputValue}
         onChangeText={setInputValue}
+        value={inputValue}
       />
 
       <Text style={styles.label}>From</Text>
@@ -136,10 +163,21 @@ export default function ConverterScreen() {
         {units.map((unit) => (
           <TouchableOpacity
             key={unit}
-            style={[styles.optionButton, fromUnit === unit && styles.activeButton]}
-            onPress={() => setFromUnit(unit)}
+            disabled={unit === toUnit}
+            style={[
+              styles.optionButton,
+              fromUnit === unit && styles.activeButton,
+              unit === toUnit && styles.disabledOptionButton,
+            ]}
+            onPress={() => handleFromUnitChange(unit)}
           >
-            <Text style={[styles.optionText, fromUnit === unit && styles.activeText]}>
+            <Text
+              style={[
+                styles.optionText,
+                fromUnit === unit && styles.activeText,
+                unit === toUnit && styles.disabledOptionText,
+              ]}
+            >
               {unit}
             </Text>
           </TouchableOpacity>
@@ -151,28 +189,37 @@ export default function ConverterScreen() {
         {units.map((unit) => (
           <TouchableOpacity
             key={unit}
-            style={[styles.optionButton, toUnit === unit && styles.activeButton]}
-            onPress={() => setToUnit(unit)}
+            disabled={unit === fromUnit}
+            style={[
+              styles.optionButton,
+              toUnit === unit && styles.activeButton,
+              unit === fromUnit && styles.disabledOptionButton,
+            ]}
+            onPress={() => handleToUnitChange(unit)}
           >
-            <Text style={[styles.optionText, toUnit === unit && styles.activeText]}>
+            <Text
+              style={[
+                styles.optionText,
+                toUnit === unit && styles.activeText,
+                unit === fromUnit && styles.disabledOptionText,
+              ]}
+            >
               {unit}
             </Text>
           </TouchableOpacity>
         ))}
       </View>
 
-      <TouchableOpacity style={styles.swapButton} onPress={handleSwapUnits}>
-        <Text style={styles.swapButtonText}>Swap Units</Text>
-      </TouchableOpacity>
+      <AppButton label="Swap Units" onPress={handleSwapUnits} style={styles.swapButton} />
 
       <View style={styles.resultCard}>
         <Text style={styles.resultLabel}>Result</Text>
         <Text style={styles.resultValue}>
           {result ? `${result} ${toUnit}` : 'Enter a value to convert'}
         </Text>
-        {category === 'Currency' && (
-          <Text style={styles.noteText}>Currency uses demo rates for preview.</Text>
-        )}
+        {category === 'Currency' ? (
+          <Text style={styles.noteText}>Currency uses demo rates for preview purposes.</Text>
+        ) : null}
       </View>
     </ScrollView>
   );
@@ -187,46 +234,55 @@ function convertTemperature(value: number, from: string, to: string) {
     celsius = value - 273.15;
   }
 
-  if (to === 'Celsius') return celsius;
-  if (to === 'Fahrenheit') return celsius * (9 / 5) + 32;
-  if (to === 'Kelvin') return celsius + 273.15;
+  if (to === 'Celsius') {
+    return celsius;
+  }
+
+  if (to === 'Fahrenheit') {
+    return celsius * (9 / 5) + 32;
+  }
+
+  if (to === 'Kelvin') {
+    return celsius + 273.15;
+  }
 
   return value;
 }
 
 const styles = StyleSheet.create({
   container: {
-    padding: 20,
     backgroundColor: '#F7F8FA',
     flexGrow: 1,
+    padding: 20,
+    paddingBottom: 32,
   },
   title: {
+    color: '#111827',
     fontSize: 28,
     fontWeight: '700',
-    color: '#111827',
     marginBottom: 8,
-    marginTop: 20,
+    marginTop: 8,
   },
   subtitle: {
-    fontSize: 16,
     color: '#6B7280',
+    fontSize: 16,
     marginBottom: 24,
   },
   label: {
+    color: '#1F2937',
     fontSize: 16,
     fontWeight: '600',
-    color: '#1F2937',
     marginBottom: 10,
     marginTop: 10,
   },
   input: {
     backgroundColor: '#FFFFFF',
-    borderWidth: 1,
     borderColor: '#E5E7EB',
     borderRadius: 14,
-    padding: 16,
+    borderWidth: 1,
     fontSize: 16,
     marginBottom: 12,
+    padding: 16,
   },
   rowWrap: {
     flexDirection: 'row',
@@ -236,57 +292,58 @@ const styles = StyleSheet.create({
   },
   optionButton: {
     backgroundColor: '#FFFFFF',
-    borderWidth: 1,
     borderColor: '#E5E7EB',
-    paddingVertical: 10,
+    borderRadius: 14,
+    borderWidth: 1,
+    minHeight: 44,
+    justifyContent: 'center',
     paddingHorizontal: 14,
-    borderRadius: 12,
+    paddingVertical: 10,
   },
   activeButton: {
     backgroundColor: '#111827',
     borderColor: '#111827',
   },
+  disabledOptionButton: {
+    backgroundColor: '#F3F4F6',
+    borderColor: '#E5E7EB',
+    opacity: 0.6,
+  },
   optionText: {
     color: '#1F2937',
-    fontWeight: '500',
+    fontWeight: '600',
   },
   activeText: {
     color: '#FFFFFF',
   },
-  swapButton: {
-    backgroundColor: '#2563EB',
-    paddingVertical: 14,
-    borderRadius: 14,
-    alignItems: 'center',
-    marginTop: 8,
-    marginBottom: 20,
+  disabledOptionText: {
+    color: '#9CA3AF',
   },
-  swapButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
+  swapButton: {
+    marginBottom: 20,
+    marginTop: 8,
   },
   resultCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 20,
-    borderWidth: 1,
     borderColor: '#E5E7EB',
+    borderRadius: 16,
+    borderWidth: 1,
     marginBottom: 30,
+    padding: 20,
   },
   resultLabel: {
-    fontSize: 14,
     color: '#6B7280',
+    fontSize: 14,
     marginBottom: 8,
   },
   resultValue: {
+    color: '#111827',
     fontSize: 22,
     fontWeight: '700',
-    color: '#111827',
   },
   noteText: {
-    fontSize: 13,
     color: '#6B7280',
+    fontSize: 13,
     marginTop: 10,
   },
 });

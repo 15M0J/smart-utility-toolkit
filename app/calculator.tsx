@@ -1,6 +1,17 @@
 import { useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
+import { AppButton } from '@/components/app-button';
+
+const buttons = [
+  ['7', '8', '9', '/'],
+  ['4', '5', '6', '*'],
+  ['1', '2', '3', '-'],
+  ['0', '.', 'C', '+'],
+];
+
+const operators = ['/', '*', '-', '+'];
+
 export default function CalculatorScreen() {
   const [expression, setExpression] = useState('');
   const [result, setResult] = useState('');
@@ -14,8 +25,7 @@ export default function CalculatorScreen() {
 
     if (value === '=') {
       try {
-        const formattedExpression = expression.replace(/×/g, '*').replace(/÷/g, '/');
-        const evalResult = Function(`"use strict"; return (${formattedExpression})`)();
+        const evalResult = Function(`"use strict"; return (${expression || '0'})`)();
         setResult(String(evalResult));
       } catch {
         setResult('Error');
@@ -23,15 +33,8 @@ export default function CalculatorScreen() {
       return;
     }
 
-    setExpression((prev) => prev + value);
+    setExpression((previousValue) => previousValue + value);
   };
-
-  const buttons = [
-    ['7', '8', '9', '÷'],
-    ['4', '5', '6', '×'],
-    ['1', '2', '3', '-'],
-    ['0', '.', 'C', '+'],
-  ];
 
   return (
     <View style={styles.container}>
@@ -51,7 +54,7 @@ export default function CalculatorScreen() {
                 key={item}
                 style={[
                   styles.button,
-                  ['÷', '×', '-', '+'].includes(item) && styles.operatorButton,
+                  operators.includes(item) && styles.operatorButton,
                   item === 'C' && styles.clearButton,
                 ]}
                 onPress={() => handlePress(item)}
@@ -59,7 +62,7 @@ export default function CalculatorScreen() {
                 <Text
                   style={[
                     styles.buttonText,
-                    ['÷', '×', '-', '+', 'C'].includes(item) && styles.lightButtonText,
+                    (operators.includes(item) || item === 'C') && styles.lightButtonText,
                   ]}
                 >
                   {item}
@@ -69,9 +72,7 @@ export default function CalculatorScreen() {
           </View>
         ))}
 
-        <TouchableOpacity style={styles.equalsButton} onPress={() => handlePress('=')}>
-          <Text style={styles.equalsButtonText}>=</Text>
-        </TouchableOpacity>
+        <AppButton label="=" onPress={() => handlePress('=')} style={styles.equalsButton} />
       </View>
     </View>
   );
@@ -79,41 +80,41 @@ export default function CalculatorScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     backgroundColor: '#F7F8FA',
+    flex: 1,
     padding: 20,
-    paddingTop: 30,
+    paddingTop: 16,
   },
   title: {
+    color: '#111827',
     fontSize: 28,
     fontWeight: '700',
-    color: '#111827',
     marginBottom: 8,
   },
   subtitle: {
-    fontSize: 16,
     color: '#6B7280',
+    fontSize: 16,
     marginBottom: 20,
   },
   displayCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    padding: 20,
-    borderWidth: 1,
     borderColor: '#E5E7EB',
+    borderRadius: 18,
+    borderWidth: 1,
+    justifyContent: 'space-between',
     marginBottom: 24,
     minHeight: 120,
-    justifyContent: 'space-between',
+    padding: 20,
   },
   expressionText: {
-    fontSize: 28,
     color: '#111827',
+    fontSize: 28,
     fontWeight: '600',
     textAlign: 'right',
   },
   resultText: {
-    fontSize: 22,
     color: '#2563EB',
+    fontSize: 22,
     fontWeight: '700',
     textAlign: 'right',
   },
@@ -125,14 +126,15 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   button: {
-    backgroundColor: '#FFFFFF',
-    width: '22%',
-    aspectRatio: 1,
-    borderRadius: 16,
-    justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
+    aspectRatio: 1,
+    backgroundColor: '#FFFFFF',
     borderColor: '#E5E7EB',
+    borderRadius: 16,
+    borderWidth: 1,
+    justifyContent: 'center',
+    minHeight: 68,
+    width: '22%',
   },
   operatorButton: {
     backgroundColor: '#111827',
@@ -141,23 +143,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#DC2626',
   },
   buttonText: {
+    color: '#111827',
     fontSize: 22,
     fontWeight: '700',
-    color: '#111827',
   },
   lightButtonText: {
     color: '#FFFFFF',
   },
   equalsButton: {
-    backgroundColor: '#2563EB',
-    paddingVertical: 18,
-    borderRadius: 16,
-    alignItems: 'center',
     marginTop: 8,
-  },
-  equalsButtonText: {
-    color: '#FFFFFF',
-    fontSize: 24,
-    fontWeight: '700',
   },
 });
